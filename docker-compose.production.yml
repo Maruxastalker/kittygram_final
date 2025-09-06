@@ -1,0 +1,46 @@
+version: '3.8'
+
+volumes:
+  pg_data:
+  static:
+  media:
+
+services:
+  db:
+    image: postgres:13
+    env_file: .env.production
+    restart: always
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  backend:
+    image: markuser4556/kittygram_backend:latest
+    env_file: .env.production
+    restart: always
+    volumes:
+      - static:/static
+      - media:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    image: markuser4556/kittygram_frontend:latest
+    env_file: .env.production
+    restart: always
+    volumes:
+      - static:/static
+    depends_on:
+      - backend
+
+  gateway:
+    image: markuser4556/kittygram_gateway:latest
+    env_file: .env.production
+    restart: always
+    ports:
+      - 80:80
+    volumes:
+      - static:/static
+      - media:/app/media
+    depends_on:
+      - frontend
