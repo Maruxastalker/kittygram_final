@@ -90,7 +90,7 @@ jobs:
 
     - name: Build and push gateway image
       run: |
-        docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/kittygram_gateway:latest ./gateway
+        docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/kittygram_gateway:latest ./nginx
         docker push ${{ secrets.DOCKER_HUB_USERNAME }}/kittygram_gateway:latest
 
     # ДепLOY на сервер
