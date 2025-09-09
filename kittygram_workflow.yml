@@ -120,6 +120,11 @@ jobs:
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
         script: |
           cd kittygram_final
+          # Установка Docker Compose если нужно
+          if ! command -v docker-compose &> /dev/null; then
+            sudo apt update
+            sudo apt install -y docker-compose-plugin
+          fi
           # Запуск контейнеров
           sudo docker compose -f docker-compose.production.yml pull
           sudo docker compose -f docker-compose.production.yml down
