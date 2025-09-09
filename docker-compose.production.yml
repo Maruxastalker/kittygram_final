@@ -21,8 +21,7 @@ services:
       - static:/static
       - media:/app/media
     depends_on:
-      db:
-        condition: service_healthy
+      - db
 
   frontend:
     image: markuser4556/kittygram_frontend:latest
