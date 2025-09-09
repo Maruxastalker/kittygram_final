@@ -39,7 +39,7 @@ jobs:
       run: python -m flake8 backend/
 
     - name: Run backend tests
-      env:  # ← ДОБАВЬТЕ ЭТОТ БЛОК!
+      env:
         POSTGRES_USER: django_user
         POSTGRES_PASSWORD: mysecretpassword
         POSTGRES_DB: django_kittygram
@@ -62,10 +62,9 @@ jobs:
       run: |
         cd frontend && npm test
 
-  build_and_deploy:
-    needs: lint_and_test
+  build_and_push_images:
     runs-on: ubuntu-latest
-
+    needs: lint_and_test
     steps:
     - name: Check out code
       uses: actions/checkout@v3
@@ -93,9 +92,27 @@ jobs:
         docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/kittygram_gateway:latest ./nginx
         docker push ${{ secrets.DOCKER_HUB_USERNAME }}/kittygram_gateway:latest
 
-    # ДепLOY на сервер
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build_and_push_images
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v3
+
+    # Копирование docker-compose на сервер
+    - name: Copy docker-compose to server
+      uses: appleboy/scp-action@master
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USERNAME }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        passphrase: ${{ secrets.SSH_PASSPHRASE }}
+        source: "docker-compose.production.yml"
+        target: "kittygram_final"
+
+    # Деплой на сервер
     - name: SSH and deploy
-      uses: appleboy/ssh-action@v0.1.10
+      uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.SSH_HOST }}
         username: ${{ secrets.SSH_USERNAME }}
@@ -103,8 +120,26 @@ jobs:
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
         script: |
           cd kittygram_final
-          docker-compose pull
-          docker-compose down
-          docker-compose up -d
-          docker exec kittygram_backend python manage.py collectstatic --no-input
-          docker exec kittygram_backend python manage.py migrate --no-input
+          # Установка Docker Compose если нужно
+          if ! command -v docker-compose &> /dev/null; then
+            sudo apt update
+            sudo apt install -y docker-compose-plugin
+          fi
+          # Запуск контейнеров
+          sudo docker compose -f docker-compose.production.yml pull
+          sudo docker compose -f docker-compose.production.yml down
+          sudo docker compose -f docker-compose.production.yml up -d
+          # Миграции и статика
+          sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate --no-input
+          sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic --no-input
+
+  send_message:
+    runs-on: ubuntu-latest
+    needs: deploy
+    steps:
+    - name: Send Telegram message
+      uses: appleboy/telegram-action@master
+      with:
+        to: ${{ secrets.TELEGRAM_TO }}
+        token: ${{ secrets.TELEGRAM_TOKEN }}
+        message: Деплой kittygram успешно выполнен!
