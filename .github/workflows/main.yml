@@ -1,4 +1,3 @@
-
 name: Kittygram CI/CD Pipeline
 
 on:
@@ -134,7 +133,6 @@ jobs:
                   - static:/app/static
                 command: >
                   sh -c "python manage.py migrate &&
-                        python manage.py collectstatic --no-input &&
                         gunicorn --bind 0.0.0.0:9000 kittygram.wsgi:application"
                 
               frontend:
@@ -185,7 +183,7 @@ jobs:
             echo "Starting new containers..."
             sudo docker compose -f docker-compose.production.yml up -d
             echo "Waiting for backend to start..."
-            sleep 15
+            sleep 20
             echo "Running migrations..."
             sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate --no-input
             echo "Collecting static files..."
