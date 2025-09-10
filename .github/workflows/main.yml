@@ -138,7 +138,7 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
         source: "docker-compose.production.yml"
-        target: "/home/${{ secrets.SSH_USERNAME }}/kittygram_final/"
+        target: "/home/${{ secrets.SSH_USERNAME }}/kittygram/"
         
     - name: Executing remote ssh commands to deploy
       uses: appleboy/ssh-action@master
@@ -148,7 +148,7 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
         script: |
-          cd kittygram_final
+          cd kittygram
           
           # Останавливаем и обновляем контейнеры
           sudo docker compose -f docker-compose.production.yml pull
