@@ -125,6 +125,11 @@ jobs:
     steps:
     - name: Checkout repo
       uses: actions/checkout@v3
+      
+    - name: Verify docker-compose file exists
+      run: |
+        ls -la docker-compose.production.yml
+        
     - name: Copy docker-compose.yml via ssh
       uses: appleboy/scp-action@master
       with:
@@ -133,7 +138,8 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
         source: "docker-compose.production.yml"
-        target: "kittygram_final"
+        target: "kittygram_final/"
+        
     - name: Executing remote ssh commands to deploy
       uses: appleboy/ssh-action@master
       with:
@@ -142,10 +148,19 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
         script: |
+          # Создаем директорию если не существует
+          mkdir -p kittygram_final
           cd kittygram_final
+          
+          # Останавливаем и обновляем контейнеры
           sudo docker compose -f docker-compose.production.yml pull
           sudo docker compose -f docker-compose.production.yml down
           sudo docker compose -f docker-compose.production.yml up -d
+          
+          # Ждем запуска БД
+          sleep 10
+          
+          # Применяем миграции и собираем статику
           sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate
-          sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic
+          sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic --noinput
           sudo docker compose -f docker-compose.production.yml exec backend cp -r /app/collected_static/. /backend_static/static/
