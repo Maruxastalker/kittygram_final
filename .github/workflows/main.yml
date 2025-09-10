@@ -93,17 +93,29 @@ jobs:
     - name: Check out code
       uses: actions/checkout@v3
 
-    - name: Copy docker-compose to server
-      uses: appleboy/scp-action@master
+    - name: Test SSH connection
+      uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.SSH_HOST }}
         username: ${{ secrets.SSH_USERNAME }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
-        source: "docker-compose.production.yml"
-        target: "kittygram_final"
+        script: |
+          echo "✅ SSH connection successful!"
+          mkdir -p kittygram_final
+          ls -la
 
-    - name: SSH and deploy
+    - name: Copy docker-compose via direct SCP
+      run: |
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > private_key.pem
+        chmod 600 private_key.pem
+        scp -i private_key.pem \
+            -o StrictHostKeyChecking=no \
+            docker-compose.production.yml \
+            ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:kittygram_final/
+        rm private_key.pem
+
+    - name: Deploy application
       uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.SSH_HOST }}
@@ -112,10 +124,9 @@ jobs:
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
         script: |
           cd kittygram_final
-          # Запуск контейнеров
           sudo docker compose -f docker-compose.production.yml pull
           sudo docker compose -f docker-compose.production.yml down
           sudo docker compose -f docker-compose.production.yml up -d
-          # Миграции и статика
+          sleep 10
           sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate --no-input
           sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic --no-input
