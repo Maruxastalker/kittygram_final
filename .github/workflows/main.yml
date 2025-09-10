@@ -148,8 +148,6 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
         script: |
-          # Создаем директорию если не существует
-          mkdir -p kittygram_final
           cd kittygram_final
           
           # Останавливаем и обновляем контейнеры
