@@ -161,15 +161,11 @@ jobs:
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
           script: |
             cat > kittygram_final/.env << 'EOF'
-            DB_ENGINE=django.db.backends.postgresql
-            DB_NAME=kittygram_db
-            DB_USER=kittygram_user
-            DB_PASSWORD=kittygram_password
+            POSTGRES_DB=django
+            POSTGRES_USER=django_user
+            POSTGRES_PASSWORD=mysecretpassword
             DB_HOST=db
             DB_PORT=5432
-            SECRET_KEY=your-secret-key-here
-            DEBUG=False
-            ALLOWED_HOSTS=your-domain.com,localhost,backend
             EOF
             echo "✅ .env file created successfully!"
 
