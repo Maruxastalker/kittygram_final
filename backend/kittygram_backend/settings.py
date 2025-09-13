@@ -1,14 +1,19 @@
 # flake8: noqa
 import os
+from django.core.management.utils import get_random_secret_key
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-cg6*%6d51ef8f#4!r3*$vmxm4)abgjw8mo!4y-q*uq1!4$-89$'
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', get_random_secret_key())
 
-DEBUG = True
+DEBUG = os.getenv('DJANGO_DEBUG') == 'True'
 
-ALLOWED_HOSTS = ['84.201.136.206', 'localhost', '127.0.0.1', 'backend', 'kittygran.myftp.org']
+allowed_hosts = os.getenv('DJANGO_ALLOWED_HOSTS', '')
+if allowed_hosts:
+    ALLOWED_HOSTS = allowed_hosts.split(',')
+else:
+    ALLOWED_HOSTS = [] if not DEBUG else ['*']
 
 INSTALLED_APPS = [
     'django.contrib.admin',

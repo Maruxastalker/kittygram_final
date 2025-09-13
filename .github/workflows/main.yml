@@ -113,40 +113,51 @@ jobs:
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
           script: |
             cat > kittygram_final/docker-compose.production.yml << 'EOF'
-            version: '3'
+            version: '3.8'
 
             volumes:
               pg_data:
               static:
+              media:
 
             services:
               db:
                 image: postgres:13
                 env_file: .env
+                restart: always
                 volumes:
                   - pg_data:/var/lib/postgresql/data
-                
+
               backend:
-                image: ${{ secrets.DOCKER_HUB_USERNAME }}/kittygram_backend:latest
+                image: markuser4556/kittygram_backend:latest
                 env_file: .env
-                volumes:
-                  - static:/app/static
-                command: >
-                  sh -c "python manage.py migrate &&
-                        gunicorn --bind 0.0.0.0:9000 kittygram.wsgi:application"
-                
-              frontend:
-                image: ${{ secrets.DOCKER_HUB_USERNAME }}/kittygram_frontend:latest
-                env_file: .env
+                restart: always
                 volumes:
                   - static:/static
-                
-              gateway:
-                image: ${{ secrets.DOCKER_HUB_USERNAME }}/kittygram_gateway:latest
+                  - media:/app/media
+                depends_on:
+                  - db
+
+              frontend:
+                image: markuser4556/kittygram_frontend:latest
+                env_file: .env
+                restart: always
                 volumes:
-                  - static:/staticfiles
+                  - static:/static
+                depends_on:
+                  - backend
+
+              gateway:
+                image: markuser4556/kittygram_gateway:latest
+                env_file: .env
+                restart: always
                 ports:
                   - 9000:80
+                volumes:
+                  - static:/static
+                  - media:/app/media
+                depends_on:
+                  - frontend
             EOF
             echo "✅ docker-compose.production.yml created successfully!"
 
