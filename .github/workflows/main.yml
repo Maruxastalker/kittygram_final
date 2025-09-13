@@ -133,7 +133,7 @@ jobs:
                 env_file: .env
                 restart: always
                 volumes:
-                  - static:/app/collected_static
+                  - static:/backend_static
                   - media:/app/media
                 depends_on:
                   - db
@@ -154,7 +154,7 @@ jobs:
                 ports:
                   - 9000:80
                 volumes:
-                  - static:/app/collected_static
+                  - static:/staticfiles/
                   - media:/media
                 depends_on:
                   - backend
