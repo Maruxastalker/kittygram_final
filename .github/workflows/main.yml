@@ -133,7 +133,7 @@ jobs:
                 env_file: .env
                 restart: always
                 volumes:
-                  - static:/app/collected_static
+                  - static:/app/static
                   - media:/app/media
                 depends_on:
                   - db
