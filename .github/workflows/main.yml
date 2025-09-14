@@ -142,6 +142,10 @@ jobs:
                 volumes:
                   - backend_static:/backend_static
                   - media:/app/media
+                command: >
+                  sh -c "python manage.py collectstatic --noinput &&
+                        python manage.py migrate &&
+                        gunicorn --bind 0.0.0.0:9000 kittygram.wsgi"
                 depends_on:
                   db:
                     condition: service_healthy
@@ -150,7 +154,7 @@ jobs:
                 image: markuser4556/kittygram_frontend:latest
                 env_file: .env
                 restart: always
-                command: sh -c "cp -r /app/build/* /frontend_static/ && cp -r /app/build/static/ /frontend_static/ && sleep infinity"
+                command: sh -c "cp -r /app/build/* /frontend_static/ && sleep infinity"
                 volumes:
                   - frontend_static:/frontend_static
                 depends_on:
@@ -163,8 +167,8 @@ jobs:
                 ports:
                   - 9000:80
                 volumes:
-                  - backend_static:/backend_static
-                  - frontend_static:/frontend_static
+                  - backend_static:/backend_static    # Правильный путь
+                  - frontend_static:/frontend_static  # Правильный путь
                   - media:/media
                 depends_on:
                   - backend

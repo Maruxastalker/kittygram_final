@@ -2,8 +2,8 @@ version: '3.8'
 
 volumes:
   pg_data:
-  backend_static:  # Отдельный volume для статики бэкенда
-  frontend_static: # Отдельный volume для статики фронтенда
+  backend_static:
+  frontend_static:
   media:
 
 services:
@@ -25,8 +25,12 @@ services:
     env_file: .env
     restart: always
     volumes:
-      - backend_static:/backend_static  # Только статика Django
+      - backend_static:/backend_static
       - media:/app/media
+    command: >
+      sh -c "python manage.py collectstatic --noinput &&
+             python manage.py migrate &&
+             gunicorn --bind 0.0.0.0:9000 kittygram.wsgi"
     depends_on:
       db:
         condition: service_healthy
@@ -35,9 +39,9 @@ services:
     image: markuser4556/kittygram_frontend:latest
     env_file: .env
     restart: always
-    command: sh -c "cp -r /app/build/* /frontend_static/ && cp -r /app/build/static/ /frontend_static/ && sleep infinity"
+    command: sh -c "cp -r /app/build/* /frontend_static/ && sleep infinity"
     volumes:
-      - frontend_static:/frontend_static  # Статика React
+      - frontend_static:/frontend_static
     depends_on:
       - backend
 
@@ -48,8 +52,8 @@ services:
     ports:
       - 9000:80
     volumes:
-      - backend_static:/backend_static    # Статика Django
-      - frontend_static:/frontend_static  # Статика фронтенда
+      - backend_static:/backend_static    # Правильный путь
+      - frontend_static:/frontend_static  # Правильный путь
       - media:/media
     depends_on:
       - backend
