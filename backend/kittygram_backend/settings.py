@@ -9,11 +9,13 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', get_random_secret_key())
 
 DEBUG = os.getenv('DJANGO_DEBUG') == 'True'
 
-allowed_hosts = os.getenv('DJANGO_ALLOWED_HOSTS', '')
+allowed_hosts = os.getenv('DJANGO_ALLOWED_HOSTS')
 if allowed_hosts:
-    ALLOWED_HOSTS = allowed_hosts.split(',')
+    ALLOWED_HOSTS = [host.strip() for host in allowed_hosts.split(',')]
+elif DEBUG:
+    ALLOWED_HOSTS = ['*']
 else:
-    ALLOWED_HOSTS = [] if not DEBUG else ['*']
+    ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     'django.contrib.admin',
