@@ -117,7 +117,8 @@ jobs:
 
             volumes:
               pg_data:
-              static:
+              backend_static:
+              frontend_static:
               media:
 
             services:
@@ -127,23 +128,31 @@ jobs:
                 restart: always
                 volumes:
                   - pg_data:/var/lib/postgresql/data
+                healthcheck:
+                  test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
+                  interval: 30s
+                  timeout: 10s
+                  retries: 3
+                  start_period: 30s
 
               backend:
                 image: markuser4556/kittygram_backend:latest
                 env_file: .env
                 restart: always
                 volumes:
-                  - static:/backend_static
+                  - backend_static:/backend_static
                   - media:/app/media
                 depends_on:
-                  - db
+                  db:
+                    condition: service_healthy
 
               frontend:
                 image: markuser4556/kittygram_frontend:latest
                 env_file: .env
                 restart: always
+                command: sh -c "cp -r /app/build/. /frontend_static/ && npx -y http-server -p 9000 /app/build"
                 volumes:
-                  - static:/static
+                  - frontend_static:/frontend_static
                 depends_on:
                   - backend
 
@@ -154,7 +163,8 @@ jobs:
                 ports:
                   - 9000:80
                 volumes:
-                  - static:/staticfiles/
+                  - backend_static:/backend_static
+                  - frontend_static:/frontend_static
                   - media:/media
                 depends_on:
                   - backend
@@ -178,7 +188,7 @@ jobs:
             DB_PORT=5432
             DJANGO_SECRET_KEY=django-insecure-cg6-6d51ef8f-4-r3-vmxm4-abgjw8mo-4y-q-uq1-4-89
             DJANGO_DEBUG=True
-            DJANGO_ALLOWED_HOSTS = 84.201.136.206,localhost,127.0.0.1,backend,kittygran.myftp.org
+            DJANGO_ALLOWED_HOSTS=84.201.136.206,localhost,127.0.0.1,backend,kittygran.myftp.org
             EOF
             echo "✅ .env file created successfully!"
 
