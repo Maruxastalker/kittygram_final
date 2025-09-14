@@ -35,6 +35,7 @@ services:
     image: markuser4556/kittygram_frontend:latest
     env_file: .env
     restart: always
+    command: sh -c "cp -r /app/build/* /frontend_static/ && cp -r /app/build/static/ /frontend_static/ && sleep infinity"
     volumes:
       - frontend_static:/frontend_static  # Статика React
     depends_on:
